@@ -22,8 +22,7 @@ import csv
 
 CONFIG_LOCATIONS = [
     os.path.join(os.path.dirname(os.path.realpath(__file__)), 'phony.ini'),
-    '/etc/phony.ini', '~/.phony.ini', './phony.ini',
-]
+    '/etc/phony.ini', '~/.phony.ini']
 
 
 if __name__ == '__main__':
@@ -112,7 +111,9 @@ if __name__ == '__main__':
                 s.sendmail(FROM, TO, mail.as_string())
                 s.quit()
             except:
-                raise
+                #raise
+                print >>sys.stderr, sys.exc_info()[1]
+                pass
         if not '-n' in sys.argv and not '--no-xmpp' in sys.argv and conf.has_section('xmpp'):
             try:
                 import xmpp
@@ -134,7 +135,9 @@ if __name__ == '__main__':
                     message.setAttr('type', 'chat')
                     client.send(message)
             except:
-                raise
+                #raise
+                print >>sys.stderr, sys.exc_info()[1]
+                pass
 
     if not '-n' in sys.argv and not '--no-timestamp' in sys.argv:
        open(TIMESTAMP, 'w').write(datetime.datetime.now().strftime(DATETIME_FMT))
