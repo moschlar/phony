@@ -1,9 +1,17 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 '''
 This script is supposed to periodically (e.g. one-minute cronjob) download the
 list of calls from your Alice/O2 DSL router.
 It searches the list for incoming missed calls which are new since the last
 run of the script and sends them per email to configurable addresses.
+
+Of course, this script can't be used on the router itself, since you can't
+put custom software there. But you can for example run this script on your
+Raspberry Pi or your NAS.
+
+All dependencies should be in the Python standard library, so you don't need to
+install any packages to run phony.
 '''
 import sys
 import datetime
