@@ -19,8 +19,6 @@ import ConfigParser
 import datetime
 import urllib2
 import csv
-import smtplib
-from email.mime.text import MIMEText
 
 CONFIG_LOCATIONS = [
     os.path.join(os.path.dirname(os.path.realpath(__file__)), 'phony.ini'),
@@ -83,18 +81,23 @@ if __name__ == '__main__':
         for ll in reversed(l):
             msg += call_line % ll + '\n'
 
-        mail = MIMEText(msg)
-        mail['Subject'] = subject
+        print msg
 
         if not '-n' in sys.argv and not '--no-mail' in sys.argv and conf.has_section('mail'):
             try:
+                import smtplib
+                from email.mime.text import MIMEText
+
                 SMTP_HOST = conf.get('mail', 'smtp_host')
                 SMTP_SEC = conf.get('mail', 'smtp_security')
                 SMTP_USER = conf.get('mail', 'smtp_username')
                 SMTP_PASS = conf.get('mail', 'smtp_password')
 
                 FROM = conf.get('mail', 'from')
-                TO = [m.strip() for m in conf.get('mail', 'to').split(',')]
+                TO = [x.strip() for x in conf.get('mail', 'to').split(',')]
+
+                mail = MIMEText(msg)
+                mail['Subject'] = subject
 
                 mail['From'] = FROM
                 mail['To'] = ', '.join(TO)
@@ -109,10 +112,29 @@ if __name__ == '__main__':
                 s.sendmail(FROM, TO, mail.as_string())
                 s.quit()
             except:
-                print mail.as_string()
                 raise
-        else:
-            print mail.get_payload()
+        if not '-n' in sys.argv and not '--no-xmpp' in sys.argv and conf.has_section('xmpp'):
+            try:
+                import xmpp
+
+                XMPP_HOST = conf.get('xmpp', 'xmpp_host')
+                XMPP_PORT = conf.get('xmpp', 'xmpp_port')
+                XMPP_RES = conf.get('xmpp', 'xmpp_resource')
+                XMPP_USER = conf.get('xmpp', 'xmpp_username')
+                XMPP_PASS = conf.get('xmpp', 'xmpp_password')
+
+                TO = [x.strip() for x in conf.get('xmpp', 'to').split(',')]
+
+                client = xmpp.Client(XMPP_HOST, debug=[])
+                client.connect(server=(XMPP_HOST, XMPP_PORT))
+                client.auth(XMPP_USER, XMPP_PASS, XMPP_RES)
+                client.sendInitPresence()
+                for to in TO:
+                    message = xmpp.Message(to, msg)
+                    message.setAttr('type', 'chat')
+                    client.send(message)
+            except:
+                raise
 
     if not '-n' in sys.argv and not '--no-timestamp' in sys.argv:
        open(TIMESTAMP, 'w').write(datetime.datetime.now().strftime(DATETIME_FMT))
