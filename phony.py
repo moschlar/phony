@@ -22,8 +22,11 @@ import csv
 import smtplib
 from email.mime.text import MIMEText
 
-CONFIG_LOCATIONS = ['/etc/phony.ini', '~/.phony.ini', './phony.ini',
-        os.path.join(os.path.dirname(os.path.realpath(__file__)), 'phony.ini')]
+CONFIG_LOCATIONS = [
+    os.path.join(os.path.dirname(os.path.realpath(__file__)), 'phony.ini'),
+    '/etc/phony.ini', '~/.phony.ini', './phony.ini',
+]
+
 
 if __name__ == '__main__':
 
@@ -77,8 +80,8 @@ if __name__ == '__main__':
         msg = conf.get('template', 'title_line') % {'subject_line': subject, 'timestamp_str': timestamp_str} + '\n' + '=' * 78 + '\n\n'
 
         call_line = conf.get('template', 'call_line')
-        for ll in l:
-            msg += call_line % ll
+        for ll in reversed(l):
+            msg += call_line % ll + '\n'
 
         mail = MIMEText(msg)
         mail['Subject'] = subject
