@@ -55,10 +55,7 @@ if __name__ == '__main__':
             s.append(u'Zeitpunkt: %(Zeitpunkt)s, Rufnummer: %(Rufnummer)s' % d)  
 
     if s:
-        if len(s) == 1:
-            subject = u'1 verpasster Anruf'
-        else:
-            subject = u'%d verpasste Anrufe' % (len(s))
+        subject = u'%d ' % len(s) + ('verpasster Anruf' if len(s) == 1 else 'verpasste Anrufe')
         msg = subject + u' seit %s\n' % (timestamp.strftime(DATETIME_FMT)) + '=' * 78 + '\n\n' + '\n'.join(s)
 
         mail = MIMEText(msg)
