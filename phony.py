@@ -10,8 +10,9 @@ Of course, this script can't be used on the router itself, since you can't
 put custom software there. But you can for example run this script on your
 Raspberry Pi or your NAS.
 
-All dependencies should be in the Python standard library, so you don't need to
-install any packages to run phony.
+The dependencies for simple notification by mail via SMTP
+should be in the Python standard library, so you don't need to
+install any packages to use phony with that.
 '''
 import sys
 import os
@@ -32,8 +33,9 @@ if __name__ == '__main__':
     if not conffiles:
         raise Exception('No config file at all could be found...')
 
+    DATETIME_FMT = conf.get('DEFAULT', 'datetime_format')
+
     TIMESTAMP = conf.get('timestamp', 'timestamp_file')
-    DATETIME_FMT = conf.get('timestamp', 'datetime_format')
 
     URL = conf.get('datasource', 'url')
     ENCODING = conf.get('datasource', 'encoding')
@@ -45,7 +47,8 @@ if __name__ == '__main__':
         MAPPING[conf.get('mapping', v)] = v
 
     try:
-        timestamp = datetime.datetime.strptime(open(TIMESTAMP).read().strip(), DATETIME_FMT)
+        with open(TIMESTAMP) as timestamp_file:
+            timestamp = datetime.datetime.strptime(timestamp_file.read().strip(), DATETIME_FMT)
     except:
         timestamp = datetime.datetime.fromtimestamp(0)
     timestamp_str = timestamp.strftime(DATETIME_FMT)
@@ -114,30 +117,47 @@ if __name__ == '__main__':
                 #raise
                 print >>sys.stderr, sys.exc_info()[1]
                 pass
-        if not '-n' in sys.argv and not '--no-xmpp' in sys.argv and conf.has_section('xmpp'):
+#        if not '-n' in sys.argv and not '--no-xmpp' in sys.argv and conf.has_section('xmpp'):
+#            try:
+#                import xmpp  # xmpppy
+#
+#                XMPP_HOST = conf.get('xmpp', 'xmpp_host')
+#                XMPP_PORT = conf.getint('xmpp', 'xmpp_port')
+#                XMPP_SECURITY = conf.getboolean('xmpp', 'xmpp_security')
+#                XMPP_RES = conf.get('xmpp', 'xmpp_resource')
+#                XMPP_USER = conf.get('xmpp', 'xmpp_username')
+#                XMPP_PASS = conf.get('xmpp', 'xmpp_password')
+#
+#                TO = [x.strip() for x in conf.get('xmpp', 'to').split(',')]
+#
+#                client = xmpp.Client(XMPP_HOST, XMPP_PORT, debug=[])
+#                print client.connect(server=(XMPP_HOST, XMPP_PORT), secure=XMPP_SECURITY)
+#                print client.auth(XMPP_USER, XMPP_PASS, XMPP_RES)
+#                print client.sendInitPresence()
+#                for to in TO:
+#                    message = xmpp.Message(to, msg)
+#                    message.setAttr('type', 'chat')
+#                    print message
+#                    client.send(message)
+#            except:
+#                #raise
+#                print >>sys.stderr, sys.exc_info()[1]
+#                pass
+        if not '-n' in sys.argv and not '--no-telegram' in sys.argv and conf.has_section('telegram'):
             try:
-                import xmpp
+                import telegram
 
-                XMPP_HOST = conf.get('xmpp', 'xmpp_host')
-                XMPP_PORT = conf.get('xmpp', 'xmpp_port')
-                XMPP_RES = conf.get('xmpp', 'xmpp_resource')
-                XMPP_USER = conf.get('xmpp', 'xmpp_username')
-                XMPP_PASS = conf.get('xmpp', 'xmpp_password')
+                TOKEN = conf.get('telegram', 'token')
+                CHAT_ID = conf.getint('telegram', 'chat_id')
 
-                TO = [x.strip() for x in conf.get('xmpp', 'to').split(',')]
+                bot = telegram.Bot(token=TOKEN)
 
-                client = xmpp.Client(XMPP_HOST, debug=[])
-                client.connect(server=(XMPP_HOST, XMPP_PORT))
-                client.auth(XMPP_USER, XMPP_PASS, XMPP_RES)
-                client.sendInitPresence()
-                for to in TO:
-                    message = xmpp.Message(to, msg)
-                    message.setAttr('type', 'chat')
-                    client.send(message)
+                bot.sendMessage(CHAT_ID, msg)
             except:
                 #raise
                 print >>sys.stderr, sys.exc_info()[1]
                 pass
 
     if not '-n' in sys.argv and not '--no-timestamp' in sys.argv:
-       open(TIMESTAMP, 'w').write(datetime.datetime.now().strftime(DATETIME_FMT))
+       with open(TIMESTAMP, 'w') as timestamp_file:
+           timestamp_file.write(datetime.datetime.now().strftime(DATETIME_FMT))
